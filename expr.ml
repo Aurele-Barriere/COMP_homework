@@ -56,6 +56,7 @@ and parse_factor = parser
 
 and parse_factor_aux e1 = parser
   | [< 'Kwd "*"; e2 = parse_atom; e3 = parse_factor_aux (Mul (e1,e2)) >] -> e3
+  | [< 'Kwd "/"; e2 = parse_atom; e3 = parse_factor_aux (Div (e1,e2)) >] -> e3                          
   | [< >] -> e1
 
 and parse_atom = parser
@@ -68,7 +69,7 @@ abstract syntax tree representing the expression: *)
 
 let test s = parse_expr (lex (Stream.of_string s))
 
-let _ = print_expr (test "1+2*(3+4)-5")
+let _ = print_expr (test "1+2/(3+4)-6")
 
 (*- : expr = Sub (Add (Num 1, Mul (Num 2, Add (Num 3, Num 4))), 5) *)
 
