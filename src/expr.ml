@@ -63,12 +63,16 @@ and parse_factor_aux e1 = parser
   | [< 'Kwd "/"; e2 = parse_power; e3 = parse_factor_aux (Div (e1,e2)) >] -> e3                          
   | [< >] -> e1
 
-and parse_power = parser
+(* and parse_power = parser
   | [< e1 = parse_atom; e2 = parse_power_aux e1 >] -> e2                   
                
 and parse_power_aux e1 = parser
   | [< 'Kwd "^"; e2 = parse_atom; e3 = parse_power_aux (Pow (e1,e2)) >] -> e3
-  | [< >] -> e1                                                                                                
+  | [< >] -> e1                                                                                          *)
+
+and parse_power = parser
+    | [< e1 = parse_atom; 'Kwd "^"; e2 = parse_power >] -> Pow(e1, e2)
+    | [< e1 = parse_atom >] -> e1
 
 and parse_atom = parser
   | [< 'Int n >] -> Num n
@@ -80,7 +84,7 @@ abstract syntax tree representing the expression: *)
 
 let test s = parse_expr (lex (Stream.of_string s))
 
-let _ = print_expr (test "1^4+2/(3+4)-6")
+let _ = print_expr (test "1^2^3^4")
 
 (*- : expr = Sub (Add (Num 1, Mul (Num 2, Add (Num 3, Num 4))), 5) *)
 
