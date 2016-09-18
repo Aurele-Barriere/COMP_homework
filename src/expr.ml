@@ -63,17 +63,21 @@ and parse_factor_aux e1 = parser
   | [< 'Kwd "/"; e2 = parse_power; e3 = parse_factor_aux (Div (e1,e2)) >] -> e3                          
   | [< >] -> e1
 
-(* and parse_power = parser
+and parse_power = parser
   | [< e1 = parse_atom; e2 = parse_power_aux e1 >] -> e2                   
                
 and parse_power_aux e1 = parser
-  | [< 'Kwd "^"; e2 = parse_atom; e3 = parse_power_aux (Pow (e1,e2)) >] -> e3
-  | [< >] -> e1                                                                                          *)
+  | [< 'Kwd "^"; e2 = parse_power >] -> Pow (e1,e2)
+  | [< >] -> e1                                                                                       
 
+(*
 and parse_power = parser
-    | [< e1 = parse_atom; 'Kwd "^"; e2 = parse_power >] -> Pow(e1, e2)
+    | [< e1 = parse_atom; 'Kwd "^" ?? "pow expected"; e2 = parse_power >] -> Pow (e1,e2)
     | [< e1 = parse_atom >] -> e1
 
+This doesn't work because we cannot start two patterns with the same element 
+
+*)
 and parse_atom = parser
   | [< 'Int n >] -> Num n
   | [< 'Kwd "("; e = parse_expr; 'Kwd ")" >] -> e
