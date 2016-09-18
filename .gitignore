@@ -2,3 +2,6 @@
 *.cmi
 *.cmo
 expr
+*.aux
+*.log
+*.out
