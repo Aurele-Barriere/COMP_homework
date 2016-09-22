@@ -5,3 +5,4 @@ expr
 *.aux
 *.log
 *.out
+generate

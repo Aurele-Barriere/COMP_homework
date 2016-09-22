@@ -44,7 +44,16 @@ let rec print_expr (e : expr) =
                   print_string("^");
                   print_expr e2;
                   print_string(")")
-                                 
+
+let rec eval_expr (e : expr) =
+  match e with
+  | Num(n) -> n
+  | Add(n,m) -> (eval_expr n) + (eval_expr m)
+  | Sub(n,m) -> (eval_expr n) - (eval_expr m)
+  | Mul(n,m) -> (eval_expr n) * (eval_expr m)
+  | Div(n,m) -> (eval_expr n) / (eval_expr m)
+  | Pow(n,m) -> int_of_float(float_of_int(eval_expr n) ** float_of_int(eval_expr m))
+                              
 (* The recursive descent parser consists of three mutually-recursive functions: *)
 
 let rec parse_expr = parser
