@@ -1,20 +1,44 @@
+(*
+  The expression parser from the Web page, adapted to respect
+  left-associativity of operators.
+*)
 
-open Genlex
+(* function to convert digit chars into integers *)
+let int_of_char c = Char.code c - Char.code '0'
 
-let keywords = ["("; ")"; "+"; "-"; "*"; "/"; "^"]
+(* First, we define the tokens (lexical units) *)
 
-let lex stream =
-  let rec aux = parser
-    | [< 'Int n when n<0; t=aux >] -> [< 'Kwd "-"; 'Int (-n); t >]
-    | [< 'h; t=aux >] -> [< 'h; t >]
-    | [< >] -> [< >] in
-  aux (make_lexer keywords stream);;
+type token = Int of int | Plus | Minus | Times | LeftBracket | RightBracket | Divide | Power
 
-(* Note that we are careful to replace negative integers in the input stream with a minus sign followed by a positive integer. *)
+(* Then we define the lexer, using stream parsers with only right recursion *)
+
+let rec lex = parser (* char stream -> token stream *)
+  | [< 'c when c = ' ' || c = '\t'; toks = lex >] -> toks (* spaces are ignored *)
+  | [< tok = token; toks = lex >] -> [< 'tok; toks >]
+    (* recognizing one token at a time *)
+  | [< >] -> [< >] (* end of stream *)
+and token = parser
+  | [< ' ('+') >] -> Plus
+  | [< ' ('-') >] -> Minus
+  | [< ' ('*') >] -> Times
+  | [< ' ('(') >] -> LeftBracket
+  | [< ' (')') >] -> RightBracket
+  | [< ' ('/') >] -> Divide
+  | [< ' ('^') >] -> Power
+  | [< ' ('0') >] -> Int 0
+    (* special case for 0 *)
+  | [< 'c when c >= '1' && c <= '9'; n = token_number (int_of_char c) >] -> Int n
+    (* numbers start with 1..9 *)
+and token_number num = parser (* number: 'num' is what has been recognized so far *)
+  | [< 'c when c >= '0' && c <= '9'; n = token_number (num*10 + int_of_char c) >] -> n (* reading more digits *)
+  | [< >] -> num (* end of number *)
+
 
 (* Next, we define a type to represent abstract syntax trees: *)
 
 type expr = Num of int | Add of expr * expr | Sub of expr * expr | Mul of expr * expr | Div of expr * expr | Pow of expr * expr
+
+(* The recursive descent parser consists of three mutually-recursive functions: *)
 
 let rec print_expr (e : expr) =
   match e with
@@ -60,23 +84,23 @@ let rec parse_expr = parser
   | [< e1 = parse_factor; e2 = parse_expr_aux e1 >] -> e2
 
 and parse_expr_aux e1 = parser
-  | [< 'Kwd "+"; e2 = parse_factor; e3 = parse_expr_aux (Add (e1,e2)) >] -> e3
-  | [< 'Kwd "-"; e2 = parse_factor; e3 = parse_expr_aux (Sub (e1,e2)) >] -> e3
+  | [< 'Plus; e2 = parse_factor; e3 = parse_expr_aux (Add (e1,e2)) >] -> e3
+  | [< 'Minus; e2 = parse_factor; e3 = parse_expr_aux (Sub (e1,e2))>] -> e3
   | [< >] -> e1
 
 and parse_factor = parser
   | [< e1 = parse_power; e2 = parse_factor_aux e1 >] -> e2
 
 and parse_factor_aux e1 = parser
-  | [< 'Kwd "*"; e2 = parse_power; e3 = parse_factor_aux (Mul (e1,e2)) >] -> e3
-  | [< 'Kwd "/"; e2 = parse_power; e3 = parse_factor_aux (Div (e1,e2)) >] -> e3                          
+  | [< 'Times; e2 = parse_power; e3 = parse_factor_aux (Mul (e1,e2)) >] -> e3
+  | [< 'Divide; e2 = parse_power; e3 = parse_factor_aux (Div (e1,e2)) >] -> e3                          
   | [< >] -> e1
 
 and parse_power = parser
   | [< e1 = parse_atom; e2 = parse_power_aux e1 >] -> e2                   
                
 and parse_power_aux e1 = parser
-  | [< 'Kwd "^"; e2 = parse_power >] -> Pow (e1,e2)
+  | [< 'Power; e2 = parse_power >] -> Pow (e1,e2)
   | [< >] -> e1                                                                                       
 
 (*
@@ -89,7 +113,7 @@ This doesn't work because we cannot start two patterns with the same element
 *)
 and parse_atom = parser
   | [< 'Int n >] -> Num n
-  | [< 'Kwd "("; e = parse_expr; 'Kwd ")" >] -> e
+  | [< 'LeftBracket; e = parse_expr; 'RightBracket >] -> e
 
 (* That is all that is required to parse simple arithmetic
 expressions. We can test it by lexing and parsing a string to get the
@@ -99,12 +123,12 @@ let test s = parse_expr (lex (Stream.of_string s))
 
 let _ = 
   let test_file = open_in "test" in
-  let s = input_line test_file in
+  let s = input_line test_file in 
   close_in test_file;
-  (* print_string s; 
+  (*  print_string s; 
   print_newline(); *)
   print_int(eval_expr (parse_expr (lex (Stream.of_string s))))
 
 
 
-             
+
