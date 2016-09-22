@@ -97,8 +97,14 @@ abstract syntax tree representing the expression: *)
 
 let test s = parse_expr (lex (Stream.of_string s))
 
-let _ = print_expr (test "1^2^3^4")
+let _ = 
+  let test_file = open_in "test" in
+  let s = input_line test_file in
+  close_in test_file;
+  (* print_string s; 
+  print_newline(); *)
+  print_int(eval_expr (parse_expr (lex (Stream.of_string s))))
 
-(*- : expr = Sub (Add (Num 1, Mul (Num 2, Add (Num 3, Num 4))), 5) *)
+
 
              
