@@ -1,7 +1,7 @@
 *~
 *.cmi
 *.cmo
-expr
+expr_parser
 *.aux
 *.log
 *.out

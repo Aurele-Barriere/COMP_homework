@@ -1,4 +1,4 @@
-open Expr
+open Expr_parser
 
 let rec generate_expr (n : int) =
   if (n=0) then string_of_int(Random.int 10)
