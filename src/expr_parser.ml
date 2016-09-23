@@ -126,7 +126,8 @@ let _ =
   let s = input_line test_file in 
   close_in test_file;
   (*  print_string s; 
-  print_newline(); *)
+  print_newline(); 0+ 4^2+ 2-4-0* 2*1+2+0^0^(2)^(7-9-(5))
+*)
   print_int(eval_expr (parse_expr (lex (Stream.of_string s))))
 
 
