@@ -8,7 +8,7 @@
 \usepackage{hyperref}
 \usepackage{listings}
 
-\title{DM COMP}
+\title{DM COMP : Création d'un parseur d'expressions arithmétiques}
 \author{Aurèle Barrière \& Antonin Garret}
 \date{29 septembre 2016}
 
@@ -16,12 +16,12 @@
 \maketitle
 
 \section{Introduction}
-Le but de ce projet est d'implémenter un parseur d'expressions arithmétiques en \texttt{OCaml}, en utilisant les \texttt{stream parsers} de l'extension \texttt{Camlp4}. Le but est ainsi de convertir une chaîne de caractère (écrite sur un alphabet comportant des nombres et des opérateurs arithmétiques) en un arbre syntaxique abstrait donnant une représentation correcte (c'est-à-dire qui respecte les propriétés de priorité et d'associativité voulues) de l'expression.
+Le but de ce projet est d'implémenter un parseur d'expressions arithmétiques en \texttt{OCaml}, en utilisant les \texttt{stream parsers} de l'extension \texttt{Camlp4}. Le but est ainsi de convertir une chaîne de caractères (écrite sur un alphabet comportant des nombres et des opérateurs arithmétiques) en un arbre syntaxique abstrait donnant une représentation correcte (c'est-à-dire qui respecte les propriétés de priorité et d'associativité voulues) de l'expression.
 
 On effectuera une analyse descendante.
 
 
-Dans une première partie, nous verrons comment aboutir à une grammaire d'expressions arithmétiques prête à être implémentée. Ensuite, nous nous intéresserons à la vérification empirique de notre implémentation.
+Dans une première partie, nous verrons comment aboutir à une grammaire d'expressions arithmétiques prête à être implémentée. Ensuite, nous verrons comment l'implémenter. Enfin, nous nous intéresserons à la vérification empirique de notre implémentation.
 
 \section{Une grammaire pour des expressions arithmétiques}
 
@@ -66,14 +66,10 @@ F     -> P F_aux
 F_aux -> * A F_aux | / A F_aux | !$\epsilon$!
 A     -> constante | ( E )
 \end{lstlisting}
-C'est ce qu'on a de déjà implémenté.
+
 
 \subsection{Ajout de l'opérateur de puissance}
-Ajout entre les facteurs et les atomes : priorité.
-
-Récursivité droite pour associativité droite.
-
-On a donc 
+Ensuite, pour ajouter un opérateur de puissance, de telle sorte qu'il soit prioritaire sur la multiplication (mais pas les parenthèses) et associatif à droite, on ajoute une fonction supplémentaire entre les facteurs et les atomes. Comme elle utilise la récursivité droite, on n'a pas à la transformer comme les précédentes. On obtient donc la grammaire : 
 \begin{lstlisting}[escapeinside={!}{!}]
 E     -> F E_aux
 E_aux -> + F E_aux | - F E_aux | !$\epsilon$!
@@ -84,15 +80,16 @@ A     -> constante | ( E )
 \end{lstlisting}
 
 \subsection{Changement de la règle de puissance}
-Dû à l'implémentation : deux règles ne peuvent pas commencer par le même élément et P se réduit en \lstinline{ A ^ P | A} qui commencent tous les deux par A.
+Cependant, la documentation des \texttt{stream parsers} précise qu'on ne peut pas commencer deux schémas de la même manière. Or, \texttt{P} se décompose en \texttt{A \^ P} ou \texttt{A}, qui commencent tous deux par \texttt{A}. On peut utiliser les paramètres d'exception \texttt{Stream.error} pour se rendre compte qu'en effet, l'analyse descendante attendra le reste de la règle (\texttt{\^ P}) même si on devrait utiliser le deuxième schéma de \texttt{P}.
 
-On remplace donc la règle par 
+Pour résoudre ce problème, on décompose la règle en deux règles :
 \begin{lstlisting}[escapeinside={!}{!}]
 P     -> A P_aux
 P_aux -> ^ P | !$\epsilon$!
 \end{lstlisting}
 
 \subsection{Grammaire finale}
+Ainsi, la grammaire obtenue est :
 \begin{lstlisting}[escapeinside={!}{!}]
 E     -> F E_aux
 E_aux -> + F E_aux | - F E_aux | !$\epsilon$!
@@ -105,16 +102,40 @@ A     -> constante | ( E )
  
 
 \section{Implémentation}
-Quelques mots sur stream parsers.
+La grammaire obtenue n'a plus qu'à être recopiée avec la syntaxe des \texttt{stream parsers}. 
 
-Préciser pourquoi on envoie e1 en argument aux fonctions auxiliaires.
+On notera tout de même qu'il convient d'envoyer en argument l'expression déjà lue par une fonction principale aux fonctions auxiliaires, qui en auront besoin pour construire l'expression. 
+% il me faut un exeple ici 
 
-\section{Tests}
-Automatiser ?
+\section{Vérification}
+Une fois le parseur implémenté, nous avons souhaité le tester pour vérifier sa correction.
+Dans un premier temps, nous avons vérifié chaque associativité, chaque priorité en donnant divers exemples. Mais nous avons souhaité automatiser le processus de vérification.
 
-Gestion d'erreurs? Stream parsers reconnaissent le début d'une expression correcte et s'en satisfont. Ca peut etre le rôle d'autre chose je ne suis pas sur.
+
+Ainsi, nous avons donc un évaluateur, qui à partir d'une expression (sous forme d'arbre syntaxique abstrait), calcule le résultat.
+
+Dans un second temps, nous avons créé un générateur aléatoire d'expressions arithmétiques (sous forme de chaînes de caractères) en \texttt{Ocaml}.
+%détailler le générateur
+
+Enfin, un programme en \texttt{bash} appelle le générateur et récupère une chaîne de caractères. Puis cette chaîne de caractère est scannée, analysée puis évaluée par notre parseur. D'un autre côté, on évalue également l'expression en \texttt{Python} (qui utilise les mêmes priorités et associativité que celles de notre parseur). Enfin, on compare les résultats.
+
+
+La vérification automatique nous a permis de ... % à faire
+
+Comme l'évaluateur de \texttt{Python} et notre évaluateur en \texttt{Ocaml} ne gèrent pas de la même manière les dépassements mémoire, il nous arrive d'avoir des résultats divergents lorsque le résultat (ou des sous-résultats) dépassent la capacité maximale de nos entiers. 
+
+% arrondi
+
+% division
+
+
+Il ne s'agit pas d'une vérification exhaustive de toutes les expressions correctes que pourraient analyser notre parseur. En effet, nous avons ajouté des conditions de profondeur maximale dans la génération d'une expression, pour éviter les dépassements mémoires la plupart du temps. Cependant
 
 \section{Conclusion}
+Pour réaliser ce parseur, il nous a fallu nous intéresser au fonctionnement de l'analyse descendante, pour adapter nos règles à la méthode utilisée (pas de récursivités gauches par exemple). Il a fallu également s'adapter à l'outil utilisé, les \texttt{stream parsers} de \texttt{Camlp4} (pas de schémas qui commencent par la même séquence).
+
+Le développement d'un outil de vérification empirique nous a permis de nous rendre compte de certais problèmes dans notre implémentation, et de nous convaincre de sa robustesse.
+
 
 
 
