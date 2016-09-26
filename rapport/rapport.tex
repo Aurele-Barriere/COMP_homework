@@ -1,9 +1,9 @@
-\documentclass[12pt]{article}
+\documentclass[11pt]{article}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[french]{babel}
 \usepackage{amsmath,amsfonts,amssymb}
-%\usepackage{fullpage}
+\usepackage{fullpage}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{listings}
@@ -16,21 +16,40 @@
 \maketitle
 
 \section{Introduction}
+Le but de ce projet est d'implémenter un parseur d'expressions arithmétiques en \texttt{OCaml}, en utilisant les \texttt{stream parsers} de l'extension \texttt{Camlp4}. Le but est ainsi de convertir une chaîne de caractère (écrite sur un alphabet comportant des nombres et des opérateurs arithmétiques) en un arbre syntaxique abstrait donnant une représentation correcte (c'est-à-dire qui respecte les propriétés de priorité et d'associativité voulues) de l'expression.
 
+On effectuera une analyse descendante.
+
+
+Dans une première partie, nous verrons comment aboutir à une grammaire d'expressions arithmétiques prête à être implémentée. Ensuite, nous nous intéresserons à la vérification empirique de notre implémentation.
 
 \section{Une grammaire pour des expressions arithmétiques}
+
+Pour implémenter notre parseur avec analyse descendante avec les \texttt{stream parsers}, il faut définir un ensemble de fonctions mutuellement récursives qui décomposent la chaîne de caractère souhaitée. Dans un premier temps, la chaîne de caractère aura été parcourue par un \textit{scanner} (ou \texttt{lexer}) qui repère les mot-clés (ou \texttt{tokens}), et qui convertit donc une chaîne de caractères en une chaîne de mot-clés.
+
+Les fonctions mutuellement récursives prennent donc en entrée une chaîne de mot-clés, et renvoient un arbre syntaxique abstrait d'expression, qu'il nous faut définir. Une expression sera ainsi : un nombre ou une addition ou soustraction ou multplication ou division ou puissance de deux expressions. On aura donc en \texttt{Ocaml} : 
+\begin{lstlisting} [breaklines=true]
+type expr = Num of int | Add of expr * expr | Sub of expr * expr | Mul of expr * expr | Div of expr * expr | Pow of expr * expr 
+\end{lstlisting}.
+
+
 \subsection{Une première version}
+Pour parser correctement des expressions arithmétiques dans lesquelles figurent l'addition, la soustraction, la multiplication et des parenthèses, en respectant les propriétés suivantes :
+\begin{itemize}
+\item L'addition, la soustraction et la multiplication sont associatives à gauche.
+\item Les parenthèses sont priotitaires, puis la multiplication, puis l'addition (ou soustraction).
+\end{itemize}
+
+On dispose d'une première grammaire. Les récursivités gauches témoignent de l'associativité gauche des opérateurs. On a décomposé notre expressions en plusieurs sous-expressions : (E : expressions, F : facteurs, A : atomes) en suivant l'ordre inverse de priorité. Les dépendances cycliques entre ces différentes fonctions récursives nous obligeront à les déclarer comme des fonctions mutuellement récursives.
+
 \begin{lstlisting}
 E -> E + F | E - F | F
 F -> F * A | A
 A -> constante | ( E )
 \end{lstlisting}
-Expliquer priorité, mutuellement récursive.
-
-Expliquer associativité gauche de toutes les opérations.
 
 \subsection{Ajout de la division}
-Même priorité que la multiplication.
+La division est un opérateur qui doit être associatif à gauche et avoir la même priorité que la multiplication. On ajoute donc la règle \texttt{F -> F / A}.
 \begin{lstlisting}
 E -> E + F | E - F | F
 F -> F * A | F / A | A
@@ -38,9 +57,7 @@ A -> constante | ( E )
 \end{lstlisting}
 
 \subsection{Récursivités gauches}
-Analyse descendante.
-
-Rappeler la méthode pour enlever réc. gauches.
+Cependant, la méthode utilisée est l'analyse descendante. On ne peut donc pas garder nos règles avec récursivité gauche. Il faut donc créer de nouvelles règles pour les transformer en récursivités droites.
 
 \begin{lstlisting}[escapeinside={!}{!}]
 E     -> F E_aux
