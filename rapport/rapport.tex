@@ -67,8 +67,8 @@ A -> constante | ( E )
 \end{tabular}
 \end{center}
 
-\subsection{Récursivités gauches}
-Cependant, la méthode utilisée est l'analyse descendante. On ne peut donc pas garder nos règles avec récursivité gauche. Il faut donc créer de nouvelles règles pour les transformer en récursivités droites.
+\subsection{Élimination des récursivités gauches}
+Cependant, la méthode utilisée est l'analyse descendante. On ne peut donc pas garder nos règles avec récursivité gauche pour garantir la terminaison de l'analyse. Il faut donc créer de nouvelles règles pour les transformer en récursivités droites.
 \begin{center}
 \begin{tabular}{c}
 \begin{lstlisting}[escapeinside={!}{!}]
@@ -131,7 +131,9 @@ A     -> constante | ( E )
 La grammaire obtenue n'a plus qu'à être recopiée avec la syntaxe des \texttt{stream parsers}. 
 
 On notera tout de même qu'il convient d'envoyer en argument l'expression déjà lue par une fonction principale aux fonctions auxiliaires, qui en auront besoin pour construire l'expression. 
-% il me faut un exemple ici 
+
+Par exemple,  pour l'expression \texttt{"1+2"}, on utilise la première règle : \lstinline{E -> F E_aux} dans laquelle \lstinline{F} se réduira en \lstinline{1} et \lstinline{E_aux} en \lstinline{+ 2}. La fonction \lstinline{E_aux} doit donc prendre en argument le facteur reconnu par la règle \lstinline{F} (ici, 1) pour pouvoir reconstituer l'arbre de l'expression \lstinline{plus(1,2)} après avoir reconnu \lstinline{+ 2}.
+
 
 \section{Vérification}
 Une fois le parseur implémenté, nous avons souhaité le tester pour vérifier sa correction.
@@ -140,8 +142,10 @@ Dans un premier temps, nous avons vérifié chaque associativité, chaque priori
 
 Ainsi, nous avons donc un évaluateur, qui à partir d'une expression (sous forme d'arbre syntaxique abstrait), calcule le résultat.
 
-Dans un second temps, nous avons créé un générateur aléatoire d'expressions arithmétiques (sous forme de chaînes de caractères) en \texttt{Ocaml}.
-%détailler le générateur
+Dans un second temps, nous avons créé un générateur aléatoire d'expressions arithmétiques (sous forme de chaînes de caractères) en \texttt{Ocaml}. On ne génère ainsi que des expressions arithmétiques correctes (pas d'erreur de parenthèsage ou de caractères non reconnus).
+
+
+
 
 Enfin, un programme en \texttt{bash} appelle le générateur et récupère une chaîne de caractères. Puis cette chaîne de caractère est scannée, analysée puis évaluée par notre parseur. D'un autre côté, on évalue également l'expression en \texttt{Python} (qui utilise les mêmes priorités et associativité que celles de notre parseur). Enfin, on compare les résultats.
 
