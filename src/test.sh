@@ -9,6 +9,8 @@ echo
 echo "print(" $(cat test) ")" > pythontest
 
 sed -i 's/\^/**/g' pythontest # python expects ** as the power operator
+sed -i 's/\//\#/g' pythontest
+sed -i 's/\#/\/\//g' pythontest
 echo "Python3 evaluates to :"
 python3 pythontest
 

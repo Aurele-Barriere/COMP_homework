@@ -3,7 +3,7 @@ open Expr_parser
 let rec generate_expr (n : int) =
   if (n=0) then string_of_int(Random.int 10)
   else
-    let r = Random.int 7 in
+    let r = Random.int 8 in
     match r with
     | 0 -> string_of_int(Random.int 10)
     | 1 -> generate_expr(n-1) ^ "+" ^ generate_expr(n-1)
@@ -12,6 +12,7 @@ let rec generate_expr (n : int) =
     | 4 -> "(" ^ generate_expr(n-1) ^ ")"
     | 5 -> " " ^ generate_expr(n)
     | 6 -> generate_expr(n-1) ^ "^" ^ generate_expr(n-1)
+    | 7 -> generate_expr(n-1) ^ "/" ^ generate_expr(n-1)
     | _ -> generate_expr(n-1)
 
 

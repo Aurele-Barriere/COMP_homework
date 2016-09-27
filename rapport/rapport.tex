@@ -145,14 +145,13 @@ Dans un second temps, nous avons créé un générateur aléatoire d'expressions
 
 Enfin, un programme en \texttt{bash} appelle le générateur et récupère une chaîne de caractères. Puis cette chaîne de caractère est scannée, analysée puis évaluée par notre parseur. D'un autre côté, on évalue également l'expression en \texttt{Python} (qui utilise les mêmes priorités et associativité que celles de notre parseur). Enfin, on compare les résultats.
 
+Il a ainsi été possible d'effectuer des tests en grande quantité (plusieurs centaines).
+Les erreurs proviennent de divisions par zéro et de dépassements mémoires dans notre évaluateur en \texttt{Ocaml} (ces dernières ne sont pas signalées par l'évaluateur mais donnent un résultat incohérent). D'autres erreurs proviennent quand on effectue une division avec des nombres négatifs, puisque \texttt{Python} et \texttt{Ocaml} n'arrondissent pas dans le même sens. Mais cette erreur provient d'une différence d'évaluateur, non de parseur.
 
-La vérification automatique nous a permis de ... % à faire
+La vérification automatique nous a également permis de trouver une erreur dans le fichier original utilisant \texttt{Genlex} pour scanner la chaîne originale. % to be continued
 
-Comme l'évaluateur de \texttt{Python} et notre évaluateur en \texttt{Ocaml} ne gèrent pas de la même manière les dépassements mémoire, il nous arrive d'avoir des résultats qui diffèrent lorsque le résultat (ou des sous-résultats) dépassent la capacité maximale de nos entiers. 
 
-% arrondi
 
-% division
 
 
 Il ne s'agit pas d'une vérification exhaustive de toutes les expressions correctes que pourraient analyser notre parseur. En effet, nous avons ajouté des conditions de profondeur maximale dans la génération d'une expression, pour éviter les dépassements mémoires la plupart du temps. Cependant ...
