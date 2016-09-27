@@ -28,10 +28,13 @@ Dans une première partie, nous verrons comment aboutir à une grammaire d'expre
 Pour implémenter notre parseur avec analyse descendante avec les \texttt{stream parsers}, il faut définir un ensemble de fonctions mutuellement récursives qui décomposent la chaîne de caractère souhaitée. Dans un premier temps, la chaîne de caractère aura été parcourue par un \textit{scanner} (ou \texttt{lexer}) qui repère les mot-clés (ou \texttt{tokens}), et qui convertit donc une chaîne de caractères en une chaîne de mot-clés.
 
 Les fonctions mutuellement récursives prennent donc en entrée une chaîne de mot-clés, et renvoient un arbre syntaxique abstrait d'expression, qu'il nous faut définir. Une expression sera ainsi : un nombre ou une addition ou soustraction ou multplication ou division ou puissance de deux expressions. On aura donc en \texttt{Ocaml} : 
+\begin{center}
+\begin{tabular}{c}
 \begin{lstlisting} [breaklines=true]
 type expr = Num of int | Add of expr * expr | Sub of expr * expr | Mul of expr * expr | Div of expr * expr | Pow of expr * expr 
 \end{lstlisting}
-
+\end{tabular}
+\end{center}
 
 \subsection{Une première version}
 Pour parser correctement des expressions arithmétiques dans lesquelles figurent l'addition, la soustraction, la multiplication et des parenthèses, en respectant les propriétés suivantes :
@@ -42,23 +45,32 @@ Pour parser correctement des expressions arithmétiques dans lesquelles figurent
 
 On dispose d'une première grammaire. Les récursivités gauches témoignent de l'associativité gauche des opérateurs. On a décomposé nos expressions en plusieurs sous-expressions : (E : expressions, F : facteurs, A : atomes) en suivant l'ordre inverse de priorité. Les dépendances cycliques entre ces différentes fonctions récursives nous obligeront à les déclarer comme des fonctions mutuellement récursives.
 
+\begin{center}
+\begin{tabular}{c}
 \begin{lstlisting}
 E -> E + F | E - F | F
 F -> F * A | A
 A -> constante | ( E )
 \end{lstlisting}
+\end{tabular}
+\end{center}
 
 \subsection{Ajout de la division}
 La division est un opérateur qui doit être associatif à gauche et avoir la même priorité que la multiplication. On ajoute donc la règle \texttt{F -> F / A}.
+\begin{center}
+\begin{tabular}{c}
 \begin{lstlisting}
 E -> E + F | E - F | F
 F -> F * A | F / A | A
 A -> constante | ( E )
 \end{lstlisting}
+\end{tabular}
+\end{center}
 
 \subsection{Récursivités gauches}
 Cependant, la méthode utilisée est l'analyse descendante. On ne peut donc pas garder nos règles avec récursivité gauche. Il faut donc créer de nouvelles règles pour les transformer en récursivités droites.
-
+\begin{center}
+\begin{tabular}{c}
 \begin{lstlisting}[escapeinside={!}{!}]
 E     -> F E_aux
 E_aux -> + F E_aux | - F E_aux | !$\epsilon$!
@@ -66,10 +78,14 @@ F     -> P F_aux
 F_aux -> * A F_aux | / A F_aux | !$\epsilon$!
 A     -> constante | ( E )
 \end{lstlisting}
+\end{tabular}
+\end{center}
 
 
 \subsection{Ajout de l'opérateur de puissance}
 Ensuite, pour ajouter un opérateur de puissance, de telle sorte qu'il soit prioritaire sur la multiplication (mais pas sur les parenthèses) et associatif à droite, on ajoute une fonction supplémentaire entre les facteurs et les atomes. Comme elle utilise la récursivité droite, il n'est pas nécessaire de la transformer comme les précédentes. On obtient donc la grammaire : 
+\begin{center}
+\begin{tabular}{c}
 \begin{lstlisting}[escapeinside={!}{!}]
 E     -> F E_aux
 E_aux -> + F E_aux | - F E_aux | !$\epsilon$!
@@ -78,19 +94,27 @@ F_aux -> * P F_aux | / P F_aux | !$\epsilon$!
 P -> A ^ P | A
 A     -> constante | ( E )
 \end{lstlisting}
+\end{tabular}
+\end{center}
 
 \subsection{Changement de la règle de puissance}
 Cependant, la documentation des \texttt{stream parsers} précise que pour une même fonction, on ne peut pas commencer deux schémas par les mêmes mot-clés. Or, \lstinline{P} se décompose en \lstinline{A ^ P} ou \lstinline{A}, qui commencent tous deux par \lstinline{A}. On peut utiliser les paramètres d'exception \texttt{Stream.error} pour se rendre compte qu'en effet, l'analyse descendante attendra le reste de la règle (\lstinline{^ P}) même si l'expression devrait utiliser le deuxième schéma de \lstinline{P}.
 
 Pour résoudre ce problème, on décompose la règle en deux règles :
+\begin{center}
+\begin{tabular}{c}
 \begin{lstlisting}[escapeinside={!}{!}]
 P     -> A P_aux
 P_aux -> ^ P | !$\epsilon$!
 \end{lstlisting}
+\end{tabular}
+\end{center}
 
 \subsection{Grammaire finale}
 Ainsi, la grammaire obtenue est :
-\begin{lstlisting}[frame=single,escapeinside={!}{!}]
+\begin{center}
+\begin{tabular}{c}
+\begin{lstlisting}[escapeinside={!}{!}]
 E     -> F E_aux
 E_aux -> + F E_aux | - F E_aux | !$\epsilon$!
 F     -> P F_aux
@@ -99,6 +123,8 @@ P     -> A P_aux
 P_aux -> ^ P | !$\epsilon$!
 A     -> constante | ( E )
 \end{lstlisting}
+\end{tabular}
+\end{center}
  
 
 \section{Implémentation}
