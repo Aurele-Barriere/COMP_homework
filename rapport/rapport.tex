@@ -30,7 +30,7 @@ Pour implémenter notre parseur avec analyse descendante avec les \texttt{stream
 Les fonctions mutuellement récursives prennent donc en entrée une chaîne de mot-clés, et renvoient un arbre syntaxique abstrait d'expression, qu'il nous faut définir. Une expression sera ainsi : un nombre ou une addition ou soustraction ou multplication ou division ou puissance de deux expressions. On aura donc en \texttt{Ocaml} : 
 \begin{lstlisting} [breaklines=true]
 type expr = Num of int | Add of expr * expr | Sub of expr * expr | Mul of expr * expr | Div of expr * expr | Pow of expr * expr 
-\end{lstlisting}.
+\end{lstlisting}
 
 
 \subsection{Une première version}
@@ -40,7 +40,7 @@ Pour parser correctement des expressions arithmétiques dans lesquelles figurent
 \item Les parenthèses sont priotitaires, puis la multiplication, puis l'addition (ou soustraction).
 \end{itemize}
 
-On dispose d'une première grammaire. Les récursivités gauches témoignent de l'associativité gauche des opérateurs. On a décomposé notre expressions en plusieurs sous-expressions : (E : expressions, F : facteurs, A : atomes) en suivant l'ordre inverse de priorité. Les dépendances cycliques entre ces différentes fonctions récursives nous obligeront à les déclarer comme des fonctions mutuellement récursives.
+On dispose d'une première grammaire. Les récursivités gauches témoignent de l'associativité gauche des opérateurs. On a décomposé nos expressions en plusieurs sous-expressions : (E : expressions, F : facteurs, A : atomes) en suivant l'ordre inverse de priorité. Les dépendances cycliques entre ces différentes fonctions récursives nous obligeront à les déclarer comme des fonctions mutuellement récursives.
 
 \begin{lstlisting}
 E -> E + F | E - F | F
@@ -69,7 +69,7 @@ A     -> constante | ( E )
 
 
 \subsection{Ajout de l'opérateur de puissance}
-Ensuite, pour ajouter un opérateur de puissance, de telle sorte qu'il soit prioritaire sur la multiplication (mais pas les parenthèses) et associatif à droite, on ajoute une fonction supplémentaire entre les facteurs et les atomes. Comme elle utilise la récursivité droite, on n'a pas à la transformer comme les précédentes. On obtient donc la grammaire : 
+Ensuite, pour ajouter un opérateur de puissance, de telle sorte qu'il soit prioritaire sur la multiplication (mais pas sur les parenthèses) et associatif à droite, on ajoute une fonction supplémentaire entre les facteurs et les atomes. Comme elle utilise la récursivité droite, il n'est pas nécessaire de la transformer comme les précédentes. On obtient donc la grammaire : 
 \begin{lstlisting}[escapeinside={!}{!}]
 E     -> F E_aux
 E_aux -> + F E_aux | - F E_aux | !$\epsilon$!
@@ -80,7 +80,7 @@ A     -> constante | ( E )
 \end{lstlisting}
 
 \subsection{Changement de la règle de puissance}
-Cependant, la documentation des \texttt{stream parsers} précise qu'on ne peut pas commencer deux schémas de la même manière. Or, \texttt{P} se décompose en \texttt{A \^ P} ou \texttt{A}, qui commencent tous deux par \texttt{A}. On peut utiliser les paramètres d'exception \texttt{Stream.error} pour se rendre compte qu'en effet, l'analyse descendante attendra le reste de la règle (\texttt{\^ P}) même si on devrait utiliser le deuxième schéma de \texttt{P}.
+Cependant, la documentation des \texttt{stream parsers} précise que pour une même fonction, on ne peut pas commencer deux schémas par les mêmes mot-clés. Or, \lstinline{P} se décompose en \lstinline{A ^ P} ou \lstinline{A}, qui commencent tous deux par \lstinline{A}. On peut utiliser les paramètres d'exception \texttt{Stream.error} pour se rendre compte qu'en effet, l'analyse descendante attendra le reste de la règle (\lstinline{^ P}) même si l'expression devrait utiliser le deuxième schéma de \lstinline{P}.
 
 Pour résoudre ce problème, on décompose la règle en deux règles :
 \begin{lstlisting}[escapeinside={!}{!}]
@@ -90,7 +90,7 @@ P_aux -> ^ P | !$\epsilon$!
 
 \subsection{Grammaire finale}
 Ainsi, la grammaire obtenue est :
-\begin{lstlisting}[escapeinside={!}{!}]
+\begin{lstlisting}[frame=single,escapeinside={!}{!}]
 E     -> F E_aux
 E_aux -> + F E_aux | - F E_aux | !$\epsilon$!
 F     -> P F_aux
@@ -105,7 +105,7 @@ A     -> constante | ( E )
 La grammaire obtenue n'a plus qu'à être recopiée avec la syntaxe des \texttt{stream parsers}. 
 
 On notera tout de même qu'il convient d'envoyer en argument l'expression déjà lue par une fonction principale aux fonctions auxiliaires, qui en auront besoin pour construire l'expression. 
-% il me faut un exeple ici 
+% il me faut un exemple ici 
 
 \section{Vérification}
 Une fois le parseur implémenté, nous avons souhaité le tester pour vérifier sa correction.
@@ -122,19 +122,19 @@ Enfin, un programme en \texttt{bash} appelle le générateur et récupère une c
 
 La vérification automatique nous a permis de ... % à faire
 
-Comme l'évaluateur de \texttt{Python} et notre évaluateur en \texttt{Ocaml} ne gèrent pas de la même manière les dépassements mémoire, il nous arrive d'avoir des résultats divergents lorsque le résultat (ou des sous-résultats) dépassent la capacité maximale de nos entiers. 
+Comme l'évaluateur de \texttt{Python} et notre évaluateur en \texttt{Ocaml} ne gèrent pas de la même manière les dépassements mémoire, il nous arrive d'avoir des résultats qui diffèrent lorsque le résultat (ou des sous-résultats) dépassent la capacité maximale de nos entiers. 
 
 % arrondi
 
 % division
 
 
-Il ne s'agit pas d'une vérification exhaustive de toutes les expressions correctes que pourraient analyser notre parseur. En effet, nous avons ajouté des conditions de profondeur maximale dans la génération d'une expression, pour éviter les dépassements mémoires la plupart du temps. Cependant
+Il ne s'agit pas d'une vérification exhaustive de toutes les expressions correctes que pourraient analyser notre parseur. En effet, nous avons ajouté des conditions de profondeur maximale dans la génération d'une expression, pour éviter les dépassements mémoires la plupart du temps. Cependant ...
 
 \section{Conclusion}
 Pour réaliser ce parseur, il nous a fallu nous intéresser au fonctionnement de l'analyse descendante, pour adapter nos règles à la méthode utilisée (pas de récursivités gauches par exemple). Il a fallu également s'adapter à l'outil utilisé, les \texttt{stream parsers} de \texttt{Camlp4} (pas de schémas qui commencent par la même séquence).
 
-Le développement d'un outil de vérification empirique nous a permis de nous rendre compte de certais problèmes dans notre implémentation, et de nous convaincre de sa robustesse.
+Le développement d'un outil de vérification empirique nous a permis de nous rendre compte de certains problèmes dans notre implémentation, et de nous convaincre de sa robustesse.
 
 
 
