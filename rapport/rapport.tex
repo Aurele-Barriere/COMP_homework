@@ -25,7 +25,7 @@ Dans une première partie, nous verrons comment aboutir à une grammaire d'expre
 
 \section{Une grammaire pour des expressions arithmétiques}
 
-Pour implémenter notre parseur avec analyse descendante avec les \texttt{stream parsers}, il faut définir un ensemble de fonctions mutuellement récursives qui décomposent la chaîne de caractère souhaitée. Dans un premier temps, la chaîne de caractère aura été parcourue par un \textit{scanner} (ou \texttt{lexer}) qui repère les mot-clés (ou \texttt{tokens}), et qui convertit donc une chaîne de caractères en une chaîne de mot-clés.
+Pour implémenter notre parseur par analyse descendante avec les \texttt{stream parsers}, il faut définir un ensemble de fonctions mutuellement récursives qui décomposent la chaîne de caractère souhaitée. Dans un premier temps, la chaîne de caractère aura été parcourue par un \textit{scanner} (ou \texttt{lexer}) qui repère les mot-clés (ou \texttt{tokens}), et qui convertit donc une chaîne de caractères en une chaîne de mot-clés.
 
 Les fonctions mutuellement récursives prennent donc en entrée une chaîne de mot-clés, et renvoient un arbre syntaxique abstrait d'expression, qu'il nous faut définir. Une expression sera ainsi : un nombre ou une addition ou soustraction ou multplication ou division ou puissance de deux expressions. On aura donc en \texttt{Ocaml} : 
 \begin{center}
@@ -37,7 +37,7 @@ type expr = Num of int | Add of expr * expr | Sub of expr * expr | Mul of expr *
 \end{center}
 
 \subsection{Une première version}
-Pour parser correctement des expressions arithmétiques dans lesquelles figurent l'addition, la soustraction, la multiplication et des parenthèses, en respectant les propriétés suivantes :
+On souhaite d'abord parser correctement des expressions arithmétiques dans lesquelles figurent l'addition, la soustraction, la multiplication et des parenthèses, en respectant les propriétés suivantes :
 \begin{itemize}
 \item L'addition, la soustraction et la multiplication sont associatives à gauche.
 \item Les parenthèses sont prioritaires, puis la multiplication, puis l'addition (ou soustraction).
@@ -131,7 +131,7 @@ A     -> constante | ( E )
  
 
 \section{Implémentation}
-La grammaire obtenue n'a plus qu'à être recopiée avec la syntaxe des \texttt{stream parsers} qui permettent de modéliser assez naturellement les différentes productions d'une grammaire. On doit cependant ajouter un nouveau mot-clé au lexer pour chaque opération que l'on désire implémenter. 
+La grammaire obtenue n'a plus qu'à être recopiée avec la syntaxe des \texttt{stream parsers} qui permet de modéliser assez naturellement les différentes productions d'une grammaire. On doit cependant ajouter un nouveau mot-clé au lexer pour chaque opération que l'on désire implémenter. 
 
 On notera par ailleurs qu'il convient d'envoyer en argument l'expression déjà lue par une fonction principale aux fonctions auxiliaires, qui en auront besoin pour construire l'expression. 
 
@@ -161,7 +161,7 @@ Les erreurs proviennent de divisions par zéro et de dépassements mémoires dan
 La vérification automatique nous a également permis de trouver une erreur dans le fichier original utilisant \texttt{Genlex} pour scanner la chaîne originale. Par exemple, pour la chaîne \texttt{"(1-0)-1''}, on obtient une erreur lors de l'analyse descendante. En utilisant les paramètres d'exception \texttt{Stream.error}, on constate que le parseur fait une erreur alors qu'il attend une parenthèse fermante, tandis que le parenthésage de l'expression est correct. Utiliser l'autre \texttt{lexer} résout le problème. Nous n'avons pas réussi à expliquer ce problème, seulement à identifier qu'il apparaît chaque fois que la chaîne de caractère contient la sous-chaîne \texttt{"0)-"} .
 
 
-Il ne s'agit pas d'une vérification exhaustive de toutes les expressions correctes que pourraient analyser notre parseur. En effet, nous avons ajouté des conditions de profondeur maximale dans la génération d'une expression, pour éviter les dépassements mémoires la plupart du temps. Cependant le nombre élevé de tests effectués n'a pas pu mettre en défaut notre parseur. 
+Il ne s'agit pas d'une vérification exhaustive de toutes les expressions correctes que pourrait analyser notre parseur. En effet, nous avons ajouté des conditions de profondeur maximale dans la génération d'une expression, pour éviter les dépassements mémoire la plupart du temps. Cependant le nombre élevé de tests effectués n'a pas pu mettre en défaut notre parseur. 
 
 \section{Conclusion}
 Pour réaliser ce parseur, il nous a fallu nous intéresser au fonctionnement de l'analyse descendante, pour adapter nos règles à la méthode utilisée (pas de récursivités gauches par exemple).
