@@ -110,6 +110,9 @@ P_aux -> ^ P | !$\epsilon$!
 \end{tabular}
 \end{center}
 
+De fait, nous avons du transformé notre grammaire en une grammaire LL(1) pour pouvoir respecter la spécification des \texttt{stream parsers}.
+
+
 \subsection{Grammaire finale}
 Ainsi, la grammaire obtenue est :
 \begin{center}
@@ -128,12 +131,13 @@ A     -> constante | ( E )
  
 
 \section{Implémentation}
-La grammaire obtenue n'a plus qu'à être recopiée avec la syntaxe des \texttt{stream parsers}. 
+La grammaire obtenue n'a plus qu'à être recopiée avec la syntaxe des \texttt{stream parsers} qui permettent de modéliser assez naturellement les différentes productions d'une grammaire. On doit cependant ajouter un nouveau mot-clé au lexer pour chaque opération que l'on désire implémenter. 
 
-On notera tout de même qu'il convient d'envoyer en argument l'expression déjà lue par une fonction principale aux fonctions auxiliaires, qui en auront besoin pour construire l'expression. 
+On notera par ailleurs qu'il convient d'envoyer en argument l'expression déjà lue par une fonction principale aux fonctions auxiliaires, qui en auront besoin pour construire l'expression. 
 
 Par exemple,  pour l'expression \texttt{"1+2"}, on utilise la première règle : \lstinline{E -> F E_aux} dans laquelle \lstinline{F} se réduira en \lstinline{1} et \lstinline{E_aux} en \lstinline{+ 2}. La fonction \lstinline{E_aux} doit donc prendre en argument le facteur reconnu par la règle \lstinline{F} (ici, 1) pour pouvoir reconstituer l'arbre de l'expression \lstinline{plus(1,2)} après avoir reconnu \lstinline{+ 2}.
 
+En réalité, les \texttt{stream parsers} nous permettent de manipuler une grammaire attribuée. L'attribut d'un noeud de l'arbre d'analyse syntaxique est dépendant de celui du fils droit, lui-même dépendant de celui du fils gauche, c'est pourquoi on doit fournir l'attribut synthétisé par le fils gauche au parser pour qu'il puisse calculer l'attribut du fils droit, puis celui du noeud étudié.
 
 \section{Vérification}
 Une fois le parseur implémenté, nous avons souhaité le tester pour vérifier sa correction.
@@ -160,9 +164,12 @@ La vérification automatique nous a également permis de trouver une erreur dans
 Il ne s'agit pas d'une vérification exhaustive de toutes les expressions correctes que pourraient analyser notre parseur. En effet, nous avons ajouté des conditions de profondeur maximale dans la génération d'une expression, pour éviter les dépassements mémoires la plupart du temps. Cependant le nombre élevé de tests effectués n'a pas pu mettre en défaut notre parseur. 
 
 \section{Conclusion}
-Pour réaliser ce parseur, il nous a fallu nous intéresser au fonctionnement de l'analyse descendante, pour adapter nos règles à la méthode utilisée (pas de récursivités gauches par exemple). Il a fallu également s'adapter à l'outil utilisé, les \texttt{stream parsers} de \texttt{Camlp4} (pas de schémas qui commencent par la même séquence).
+Pour réaliser ce parseur, il nous a fallu nous intéresser au fonctionnement de l'analyse descendante, pour adapter nos règles à la méthode utilisée (pas de récursivités gauches par exemple).
 
-Le développement d'un outil de vérification empirique nous a permis de nous rendre compte de certains problèmes dans notre implémentation, et de nous convaincre de sa robustesse.
+Il a fallu également s'adapter à l'outil utilisé, \texttt{Camlp4}, qui permet de modéliser assez facilement une grammaire en représentant les productions par des \texttt{stream parsers}, et même de manipuler des grammaires attribuées en utilisant les arguments renvoyés par les \texttt{parsers} comme des attributs. Cependant cet outil présentent certaines limites, comme l'impossibilité d'utiliser des schémas commençant par la même séquence dans un \texttt{parser}, ce qui contraint à utiliser des grammaires LL(1). On notera aussi que la que la lecture par la gauche propre aux \texttt{streams} est adaptée à l'utilisation de l'analyse descendante, ce qui nous convenait ici, mais pas à celle de l'analyse ascendante. 
+
+Enfin, le développement d'un outil de vérification empirique nous a permis de nous rendre compte de certains problèmes dans notre implémentation, et de nous convaincre de sa robustesse.
+
 
 
 
